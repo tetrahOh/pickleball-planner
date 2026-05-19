@@ -24,9 +24,13 @@ create table if not exists sessions (
 create table if not exists session_attendees (
   session_id uuid not null references sessions(id) on delete cascade,
   user_id uuid not null references family_members(id) on delete cascade,
+  added_by uuid references family_members(id) on delete set null,
   created_at timestamptz not null default now(),
   primary key (session_id, user_id)
 );
+
+alter table session_attendees
+  add column if not exists added_by uuid references family_members(id) on delete set null;
 
 alter table family_members enable row level security;
 alter table sessions enable row level security;
