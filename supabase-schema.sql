@@ -19,6 +19,7 @@ create table if not exists sessions (
   courts integer not null check (courts > 0),
   court_numbers text,
   cost_per_court_hour numeric not null default 0 check (cost_per_court_hour >= 0),
+  is_booked boolean not null default false,
   notes text,
   created_at timestamptz not null default now()
 );
@@ -28,6 +29,9 @@ alter table sessions
 
 alter table sessions
   add column if not exists court_numbers text;
+
+alter table sessions
+  add column if not exists is_booked boolean not null default false;
 
 create table if not exists session_attendees (
   session_id uuid not null references sessions(id) on delete cascade,
