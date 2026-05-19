@@ -36,7 +36,7 @@ function mapSession(row, members, attendeeRows) {
 }
 
 function PickleIcon() { return <span className="pickle-icon" aria-hidden="true"><span /><span /><span /></span>; }
-function CreatorCredit() { return <p className="creator-credit">Created by Liam Ho</p>; }
+function CreatorCredit() { return <p className="creator-credit">Created by Cousin Liam</p>; }
 
 function LoginScreen({ onLogin, isBusy, setupError }) {
   const [name, setName] = useState(''); const [error, setError] = useState('');
