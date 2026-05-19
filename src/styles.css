@@ -85,6 +85,7 @@ select[multiple] { min-height: 120px; }
 .session-details div { min-height: 76px; padding: 12px; background: #f8faf6; border: 1px solid var(--line); border-radius: 8px; }
 dt { margin-bottom: 6px; color: var(--muted); font-size: 0.82rem; font-weight: 800; }
 dd { margin: 0; overflow-wrap: anywhere; font-weight: 800; }
+.map-link { color: var(--green-dark); text-decoration-thickness: 2px; text-underline-offset: 3px; }
 .session-notes { margin: 0 0 18px; padding: 12px 14px; background: #fff9df; border-left: 4px solid var(--yellow); border-radius: 4px; }
 .attendees { margin-bottom: 18px; }
 .attendee-list { display: flex; flex-wrap: wrap; gap: 8px; }
