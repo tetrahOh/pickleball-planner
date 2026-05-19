@@ -6,40 +6,23 @@ const CURRENT_USER_KEY = 'family-pickleball-current-user';
 const DEFAULT_NOTES = 'Bring your own paddle, towel, and water. Stretch beforehand.';
 const LOCATION_OPTIONS = ['Olympic Park Sports Hall', 'Tennis World North Ryde'];
 const TIME_OPTIONS = ['07:00', '08:00', '09:00', '10:00', '16:00', '18:00', '19:00'];
-
 const blankSession = { title: '', date: '', startTime: '', durationHours: 1, location: '', courts: 1, costPerCourtHour: 0, notes: '' };
 
 function cleanName(name) { return name.trim().replace(/\s+/g, ' '); }
 function nameKey(name) { return cleanName(name).toLowerCase(); }
 function todayString() { return new Date().toISOString().slice(0, 10); }
-function displayTime(time) {
-  const [hours, minutes] = time.split(':').map(Number);
-  return new Date(2026, 0, 1, hours, minutes).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-function formatDate(date) {
-  return date ? new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${date}T00:00:00`)) : 'Date not set';
-}
-function formatMoney(value) {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'AUD', maximumFractionDigits: value % 1 === 0 ? 0 : 2 }).format(Number.isFinite(value) ? value : 0);
-}
+function displayTime(time) { const [hours, minutes] = time.split(':').map(Number); return new Date(2026, 0, 1, hours, minutes).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
+function formatDate(date) { return date ? new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${date}T00:00:00`)) : 'Date not set'; }
+function formatMoney(value) { return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'AUD', maximumFractionDigits: value % 1 === 0 ? 0 : 2 }).format(Number.isFinite(value) ? value : 0); }
 
 async function api(path, options = {}) {
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-  });
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { ...options, headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', ...(options.headers || {}) } });
   const text = await response.text();
   const data = text ? JSON.parse(text) : null;
   if (!response.ok) {
     const detail = data?.message || data?.hint || '';
-    if (detail.includes('schema cache') || detail.includes('does not exist') || detail.includes('Could not find the table')) {
-      throw new Error('Database tables are not set up yet. Run supabase-schema.sql in Supabase, then refresh.');
-    }
+    if (detail.includes('added_by')) throw new Error('Supabase needs the latest RSVP update. Run supabase-schema.sql again, then refresh.');
+    if (detail.includes('schema cache') || detail.includes('does not exist') || detail.includes('Could not find the table')) throw new Error('Database tables are not set up yet. Run supabase-schema.sql in Supabase, then refresh.');
     throw new Error(detail || 'Supabase request failed.');
   }
   return data;
@@ -49,77 +32,23 @@ function mapSession(row, members, attendeeRows) {
   const creator = members.find((member) => member.id === row.creator_id);
   const sessionAttendees = attendeeRows.filter((item) => item.session_id === row.id);
   return {
-    id: row.id,
-    title: row.title || '',
-    date: row.session_date,
-    startTime: String(row.start_time || '').slice(0, 5),
-    durationHours: Number(row.duration_hours),
-    location: row.location || '',
-    courts: Number(row.courts),
-    costPerCourtHour: Number(row.cost_per_court_hour),
-    notes: row.notes || '',
-    creatorId: row.creator_id,
-    creatorName: creator?.name || 'Unknown',
-    attendeeIds: sessionAttendees.map((item) => item.user_id),
-    attendees: sessionAttendees.map((item) => members.find((member) => member.id === item.user_id)).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name)),
+    id: row.id, title: row.title || '', date: row.session_date, startTime: String(row.start_time || '').slice(0, 5), durationHours: Number(row.duration_hours), location: row.location || '', courts: Number(row.courts), costPerCourtHour: Number(row.cost_per_court_hour), notes: row.notes || '', creatorId: row.creator_id, creatorName: creator?.name || 'Unknown', attendeeIds: sessionAttendees.map((item) => item.user_id),
+    attendees: sessionAttendees.map((item) => { const member = members.find((person) => person.id === item.user_id); return member ? { ...member, addedById: item.added_by || null } : null; }).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name)),
   };
 }
 
 function LoginScreen({ onLogin, isBusy, setupError }) {
-  const [name, setName] = useState('');
-  const [error, setError] = useState('');
-
-  function submit(event) {
-    event.preventDefault();
-    const value = cleanName(name);
-    if (value.length < 2) {
-      setError('Please enter your name.');
-      return;
-    }
-    onLogin(value).catch((loginError) => setError(loginError.message));
-  }
-
-  return (
-    <main className="login-shell">
-      <section className="login-panel" aria-labelledby="login-title">
-        <div className="login-art" aria-hidden="true"><div className="brand-mark">PB</div><div className="court-mark court-one" /><div className="court-mark court-two" /><div className="ball-mark" /></div>
-        <div className="login-content">
-          <p className="eyebrow">Family sessions</p><h1 id="login-title">Family Pickleball Planner</h1>
-          {setupError ? <p className="setup-error">{setupError}</p> : null}
-          <form onSubmit={submit} className="login-form">
-            <label htmlFor="login-name">Your name</label>
-            <input id="login-name" value={name} onChange={(event) => { setName(event.target.value); setError(''); }} placeholder="e.g. Liam" autoComplete="name" />
-            {error ? <p className="form-error">{error}</p> : null}
-            <button className="primary-button" type="submit" disabled={isBusy}>{isBusy ? 'Logging in...' : 'Log In'}</button>
-          </form>
-        </div>
-      </section>
-    </main>
-  );
+  const [name, setName] = useState(''); const [error, setError] = useState('');
+  function submit(event) { event.preventDefault(); const value = cleanName(name); if (value.length < 2) { setError('Please enter your name.'); return; } onLogin(value).catch((loginError) => setError(loginError.message)); }
+  return <main className="login-shell"><section className="login-panel" aria-labelledby="login-title"><div className="login-art" aria-hidden="true"><div className="brand-mark">PB</div><div className="court-mark court-one" /><div className="court-mark court-two" /><div className="ball-mark" /></div><div className="login-content"><p className="eyebrow">Family sessions</p><h1 id="login-title">Family Pickleball Planner</h1>{setupError ? <p className="setup-error">{setupError}</p> : null}<form onSubmit={submit} className="login-form"><label htmlFor="login-name">Your name</label><input id="login-name" value={name} onChange={(event) => { setName(event.target.value); setError(''); }} placeholder="e.g. Liam" autoComplete="name" />{error ? <p className="form-error">{error}</p> : null}<button className="primary-button" type="submit" disabled={isBusy}>{isBusy ? 'Logging in...' : 'Log In'}</button></form></div></section></main>;
 }
 
 function SessionForm({ initialSession, onSubmit, onCancel, submitLabel, isBusy }) {
   const [session, setSession] = useState(initialSession ?? blankSession);
   const selectedLocation = LOCATION_OPTIONS.includes(session.location) ? session.location : (session.location ? 'custom' : '');
   const update = (field, value) => setSession((current) => ({ ...current, [field]: value }));
-  function submit(event) {
-    event.preventDefault();
-    const notes = session.notes.trim() || DEFAULT_NOTES;
-    onSubmit({ ...session, title: session.title.trim(), location: session.location.trim(), notes, durationHours: Number(session.durationHours), courts: Number(session.courts), costPerCourtHour: Number(session.costPerCourtHour) });
-  }
-  return (
-    <form className="session-form" onSubmit={submit}>
-      <div className="field full"><label htmlFor="session-title">Session title <span>optional</span></label><input id="session-title" value={session.title} onChange={(e) => update('title', e.target.value)} placeholder="Saturday morning hit" /></div>
-      <div className="field"><label htmlFor="session-date">Date</label><input id="session-date" type="date" value={session.date} onChange={(e) => update('date', e.target.value)} required /></div>
-      <div className="field time-field"><label htmlFor="session-time">Start time</label><input id="session-time" type="time" value={session.startTime} onChange={(e) => update('startTime', e.target.value)} required /><div className="quick-time-grid">{TIME_OPTIONS.map((time) => <button key={time} className={session.startTime === time ? 'time-chip active' : 'time-chip'} type="button" onClick={() => update('startTime', time)}>{displayTime(time)}</button>)}</div></div>
-      <div className="field"><label htmlFor="session-duration">Duration</label><select id="session-duration" value={session.durationHours} onChange={(e) => update('durationHours', e.target.value)}><option value="0.5">30 minutes</option><option value="1">1 hour</option><option value="1.5">1.5 hours</option><option value="2">2 hours</option><option value="2.5">2.5 hours</option><option value="3">3 hours</option></select></div>
-      <div className="field"><label htmlFor="session-location-choice">Location</label><select id="session-location-choice" value={selectedLocation} onChange={(e) => update('location', e.target.value === 'custom' ? '' : e.target.value)} required><option value="" disabled>Choose a location</option>{LOCATION_OPTIONS.map((location) => <option key={location} value={location}>{location}</option>)}<option value="custom">Another location</option></select>{selectedLocation === 'custom' ? <input className="location-custom" value={session.location} onChange={(e) => update('location', e.target.value)} placeholder="Type another location" required /> : null}</div>
-      <div className="field"><label htmlFor="session-courts">Number of courts</label><input id="session-courts" type="number" min="1" step="1" value={session.courts} onChange={(e) => update('courts', e.target.value)} required /></div>
-      <div className="field"><label htmlFor="session-cost">Cost per court per hour</label><input id="session-cost" type="number" min="0" step="0.01" value={session.costPerCourtHour} onChange={(e) => update('costPerCourtHour', e.target.value)} required /></div>
-      <div className="field full"><label htmlFor="session-notes">Notes <span>optional</span></label><textarea id="session-notes" value={session.notes} onChange={(e) => update('notes', e.target.value)} placeholder={DEFAULT_NOTES} /></div>
-      <div className="form-actions full">{onCancel ? <button className="secondary-button" type="button" onClick={onCancel}>Cancel</button> : null}<button className="primary-button" type="submit" disabled={isBusy}>{isBusy ? 'Saving...' : submitLabel}</button></div>
-    </form>
-  );
+  function submit(event) { event.preventDefault(); const notes = session.notes.trim() || DEFAULT_NOTES; onSubmit({ ...session, title: session.title.trim(), location: session.location.trim(), notes, durationHours: Number(session.durationHours), courts: Number(session.courts), costPerCourtHour: Number(session.costPerCourtHour) }); }
+  return <form className="session-form" onSubmit={submit}><div className="field full"><label htmlFor="session-title">Session title <span>optional</span></label><input id="session-title" value={session.title} onChange={(e) => update('title', e.target.value)} placeholder="Saturday morning hit" /></div><div className="field"><label htmlFor="session-date">Date</label><input id="session-date" type="date" value={session.date} onChange={(e) => update('date', e.target.value)} required /></div><div className="field time-field"><label htmlFor="session-time">Start time</label><input id="session-time" type="time" value={session.startTime} onChange={(e) => update('startTime', e.target.value)} required /><div className="quick-time-grid">{TIME_OPTIONS.map((time) => <button key={time} className={session.startTime === time ? 'time-chip active' : 'time-chip'} type="button" onClick={() => update('startTime', time)}>{displayTime(time)}</button>)}</div></div><div className="field"><label htmlFor="session-duration">Duration</label><select id="session-duration" value={session.durationHours} onChange={(e) => update('durationHours', e.target.value)}><option value="0.5">30 minutes</option><option value="1">1 hour</option><option value="1.5">1.5 hours</option><option value="2">2 hours</option><option value="2.5">2.5 hours</option><option value="3">3 hours</option></select></div><div className="field"><label htmlFor="session-location-choice">Location</label><select id="session-location-choice" value={selectedLocation} onChange={(e) => update('location', e.target.value === 'custom' ? '' : e.target.value)} required><option value="" disabled>Choose a location</option>{LOCATION_OPTIONS.map((location) => <option key={location} value={location}>{location}</option>)}<option value="custom">Another location</option></select>{selectedLocation === 'custom' ? <input className="location-custom" value={session.location} onChange={(e) => update('location', e.target.value)} placeholder="Type another location" required /> : null}</div><div className="field"><label htmlFor="session-courts">Number of courts</label><input id="session-courts" type="number" min="1" step="1" value={session.courts} onChange={(e) => update('courts', e.target.value)} required /></div><div className="field"><label htmlFor="session-cost">Cost per court per hour</label><input id="session-cost" type="number" min="0" step="0.01" value={session.costPerCourtHour} onChange={(e) => update('costPerCourtHour', e.target.value)} required /></div><div className="field full"><label htmlFor="session-notes">Notes <span>optional</span></label><textarea id="session-notes" value={session.notes} onChange={(e) => update('notes', e.target.value)} placeholder={DEFAULT_NOTES} /></div><div className="form-actions full">{onCancel ? <button className="secondary-button" type="button" onClick={onCancel}>Cancel</button> : null}<button className="primary-button" type="submit" disabled={isBusy}>{isBusy ? 'Saving...' : submitLabel}</button></div></form>;
 }
 
 function RsvpPanel({ session, users, currentUser, onAddAttendees, onRemoveAttendee, isBusy }) {
@@ -129,63 +58,26 @@ function RsvpPanel({ session, users, currentUser, onAddAttendees, onRemoveAttend
   const isCurrentUserAttending = attendeeSet.has(currentUser.id);
   function toggleUser(userId) { setSelectedUserIds((current) => current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId]); }
   function addAttendees(ids) { onAddAttendees(session.id, ids).then(() => setSelectedUserIds([])); }
-  return (
-    <div className="rsvp-panel">
-      <div className="button-row"><button className="primary-button compact" type="button" onClick={() => addAttendees([currentUser.id])} disabled={isBusy || isCurrentUserAttending}>I'm Attending</button><button className="secondary-button compact" type="button" onClick={() => onRemoveAttendee(session.id, currentUser.id)} disabled={isBusy || !isCurrentUserAttending}>Not Attending</button></div>
-      <div className="family-rsvp"><div className="family-rsvp-header"><div><h4>RSVP for Family</h4><p>Tick the people you are bringing, then add them.</p></div><button className="secondary-button compact" type="button" onClick={() => addAttendees(selectedUserIds)} disabled={isBusy || selectedUserIds.length === 0}>Add {selectedUserIds.length || ''} Selected</button></div>{familyChoices.length ? <div className="family-checklist">{familyChoices.map((user) => <label className={selectedUserIds.includes(user.id) ? 'family-check selected' : 'family-check'} key={user.id}><input type="checkbox" checked={selectedUserIds.includes(user.id)} onChange={() => toggleUser(user.id)} /> <span>{user.name}</span></label>)}</div> : <p className="empty-text">Everyone in the family list is already attending.</p>}</div>
-    </div>
-  );
+  return <div className="rsvp-panel"><div className="rsvp-help"><strong>RSVP to this session</strong><span>Use “I'm Attending” for yourself. Use “RSVP for Family” to add people you are bringing.</span></div><div className="button-row"><button className="primary-button compact" type="button" onClick={() => addAttendees([currentUser.id])} disabled={isBusy || isCurrentUserAttending}>I'm Attending</button><button className="secondary-button compact" type="button" onClick={() => onRemoveAttendee(session.id, currentUser.id)} disabled={isBusy || !isCurrentUserAttending}>Not Attending</button></div><div className="family-rsvp"><div className="family-rsvp-header"><div><h4>RSVP for Family</h4><p>Tick only the people you are adding. You can remove people you added later.</p></div><button className="secondary-button compact" type="button" onClick={() => addAttendees(selectedUserIds)} disabled={isBusy || selectedUserIds.length === 0}>Add {selectedUserIds.length || ''} Selected</button></div>{familyChoices.length ? <div className="family-checklist">{familyChoices.map((user) => <label className={selectedUserIds.includes(user.id) ? 'family-check selected' : 'family-check'} key={user.id}><input type="checkbox" checked={selectedUserIds.includes(user.id)} onChange={() => toggleUser(user.id)} /> <span>{user.name}</span></label>)}</div> : <p className="empty-text">Everyone in the family list is already attending.</p>}</div></div>;
 }
 
 function SessionCard({ session, users, currentUser, onAddAttendees, onRemoveAttendee, onEdit, onDelete, isBusy }) {
   const totalCost = session.courts * session.costPerCourtHour * session.durationHours;
   const perAttendeeCost = session.attendees.length ? totalCost / session.attendees.length : null;
   const canManage = session.creatorId === currentUser.id;
-  return (
-    <article className="session-card">
-      <div className="session-card-header"><div><p className="date-line">{formatDate(session.date)} at {session.startTime}</p><h3>{session.title || 'Pickleball Session'}</h3></div>{canManage ? <div className="card-actions"><button className="secondary-button compact" type="button" onClick={() => onEdit(session)}>Edit Session</button><button className="danger-button compact" type="button" onClick={() => onDelete(session.id)} disabled={isBusy}>Delete Session</button></div> : null}</div>
-      <dl className="session-details"><div><dt>Duration</dt><dd>{session.durationHours} hour{session.durationHours === 1 ? '' : 's'}</dd></div><div><dt>Location</dt><dd>{session.location}</dd></div><div><dt>Courts</dt><dd>{session.courts}</dd></div><div><dt>Court cost</dt><dd>{formatMoney(session.costPerCourtHour)} / hour</dd></div><div><dt>Total cost</dt><dd>{formatMoney(totalCost)}</dd></div><div><dt>Cost per attendee</dt><dd>{perAttendeeCost === null ? 'No attendees confirmed yet' : formatMoney(perAttendeeCost)}</dd></div><div><dt>Created by</dt><dd>{session.creatorName}</dd></div></dl>
-      {session.notes ? <p className="session-notes">{session.notes}</p> : null}
-      <section className="attendees" aria-label="Confirmed attendees"><h4>Confirmed attendees</h4>{session.attendees.length ? <div className="attendee-list">{session.attendees.map((user) => <span className="attendee-pill" key={user.id}>{user.name}<button type="button" aria-label={`Remove ${user.name}`} onClick={() => onRemoveAttendee(session.id, user.id)} disabled={isBusy}>x</button></span>)}</div> : <p className="empty-text">No attendees confirmed yet</p>}</section>
-      <RsvpPanel session={session} users={users} currentUser={currentUser} onAddAttendees={onAddAttendees} onRemoveAttendee={onRemoveAttendee} isBusy={isBusy} />
-    </article>
-  );
+  return <article className="session-card"><div className="session-card-header"><div><p className="date-line">{formatDate(session.date)} at {session.startTime}</p><h3>{session.title || 'Pickleball Session'}</h3></div>{canManage ? <div className="card-actions"><button className="secondary-button compact" type="button" onClick={() => onEdit(session)}>Edit Session</button><button className="danger-button compact" type="button" onClick={() => onDelete(session.id)} disabled={isBusy}>Delete Session</button></div> : null}</div><dl className="session-details"><div><dt>Duration</dt><dd>{session.durationHours} hour{session.durationHours === 1 ? '' : 's'}</dd></div><div><dt>Location</dt><dd>{session.location}</dd></div><div><dt>Courts</dt><dd>{session.courts}</dd></div><div><dt>Court cost</dt><dd>{formatMoney(session.costPerCourtHour)} / hour</dd></div><div><dt>Total cost</dt><dd>{formatMoney(totalCost)}</dd></div><div><dt>Cost per attendee</dt><dd>{perAttendeeCost === null ? 'No attendees confirmed yet' : formatMoney(perAttendeeCost)}</dd></div><div><dt>Created by</dt><dd>{session.creatorName}</dd></div></dl>{session.notes ? <p className="session-notes">{session.notes}</p> : null}<section className="attendees" aria-label="Confirmed attendees"><h4>Confirmed attendees</h4>{session.attendees.length ? <div className="attendee-list">{session.attendees.map((user) => { const canRemove = user.id === currentUser.id || user.addedById === currentUser.id; return <span className="attendee-pill" key={user.id}>{user.name}{canRemove ? <button type="button" aria-label={`Remove ${user.name}`} onClick={() => onRemoveAttendee(session.id, user.id)} disabled={isBusy}>x</button> : null}</span>; })}</div> : <p className="empty-text">No attendees confirmed yet</p>}<p className="attendee-note">You can remove yourself, or family members you added.</p></section><RsvpPanel session={session} users={users} currentUser={currentUser} onAddAttendees={onAddAttendees} onRemoveAttendee={onRemoveAttendee} isBusy={isBusy} /></article>;
 }
 
 export default function App() {
-  const [users, setUsers] = useState([]);
-  const [sessions, setSessions] = useState([]);
-  const [currentUser, setCurrentUser] = useState(() => { try { return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)); } catch { return null; } });
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingSession, setEditingSession] = useState(null);
-  const [isBusy, setIsBusy] = useState(false);
-  const [message, setMessage] = useState('');
-  const [setupError, setSetupError] = useState('');
-
-  async function loadData() {
-    const [members, sessionRows, attendeeRows] = await Promise.all([api('family_members?select=id,name&order=name.asc'), api(`sessions?select=id,title,session_date,start_time,duration_hours,location,courts,cost_per_court_hour,notes,creator_id,created_at&session_date=gte.${todayString()}&order=session_date.asc,start_time.asc`), api('session_attendees?select=session_id,user_id')]);
-    setUsers(members); setSessions(sessionRows.map((session) => mapSession(session, members, attendeeRows))); setSetupError('');
-  }
+  const [users, setUsers] = useState([]); const [sessions, setSessions] = useState([]); const [currentUser, setCurrentUser] = useState(() => { try { return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)); } catch { return null; } }); const [showCreateForm, setShowCreateForm] = useState(false); const [editingSession, setEditingSession] = useState(null); const [isBusy, setIsBusy] = useState(false); const [message, setMessage] = useState(''); const [setupError, setSetupError] = useState('');
+  async function loadData() { const [members, sessionRows, attendeeRows] = await Promise.all([api('family_members?select=id,name&order=name.asc'), api(`sessions?select=id,title,session_date,start_time,duration_hours,location,courts,cost_per_court_hour,notes,creator_id,created_at&session_date=gte.${todayString()}&order=session_date.asc,start_time.asc`), api('session_attendees?select=session_id,user_id,added_by')]); setUsers(members); setSessions(sessionRows.map((session) => mapSession(session, members, attendeeRows))); setSetupError(''); }
   useEffect(() => { if (currentUser) loadData().catch((error) => setSetupError(error.message)); }, [currentUser]);
-
-  async function login(name) {
-    setIsBusy(true); setMessage('');
-    try {
-      const key = nameKey(name); const existing = await api(`family_members?select=id,name&normalized_name=eq.${encodeURIComponent(key)}&limit=1`); let user = existing[0];
-      if (!user) { try { const created = await api('family_members', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ name, normalized_name: key }) }); user = created[0]; } catch { const matchingUsers = await api(`family_members?select=id,name&normalized_name=eq.${encodeURIComponent(key)}&limit=1`); user = matchingUsers[0]; } }
-      setCurrentUser(user); localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user)); await loadData();
-    } catch (error) { setSetupError(error.message); throw error; } finally { setIsBusy(false); }
-  }
+  async function login(name) { setIsBusy(true); setMessage(''); try { const key = nameKey(name); const existing = await api(`family_members?select=id,name&normalized_name=eq.${encodeURIComponent(key)}&limit=1`); let user = existing[0]; if (!user) { try { const created = await api('family_members', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ name, normalized_name: key }) }); user = created[0]; } catch { const matchingUsers = await api(`family_members?select=id,name&normalized_name=eq.${encodeURIComponent(key)}&limit=1`); user = matchingUsers[0]; } } setCurrentUser(user); localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user)); await loadData(); } catch (error) { setSetupError(error.message); throw error; } finally { setIsBusy(false); } }
   function logout() { setCurrentUser(null); localStorage.removeItem(CURRENT_USER_KEY); setShowCreateForm(false); setEditingSession(null); }
-  async function saveSession(session) {
-    setIsBusy(true); setMessage('');
-    const payload = { title: session.title || null, session_date: session.date, start_time: session.startTime, duration_hours: session.durationHours, location: session.location, courts: session.courts, cost_per_court_hour: session.costPerCourtHour, notes: session.notes || null };
-    try { if (session.id) { await api(`sessions?id=eq.${session.id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(payload) }); setEditingSession(null); setMessage('Session updated.'); } else { await api('sessions', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ ...payload, creator_id: currentUser.id }) }); setShowCreateForm(false); setMessage('Session created.'); } await loadData(); } catch (error) { setMessage(error.message); } finally { setIsBusy(false); }
-  }
+  async function saveSession(session) { setIsBusy(true); setMessage(''); const payload = { title: session.title || null, session_date: session.date, start_time: session.startTime, duration_hours: session.durationHours, location: session.location, courts: session.courts, cost_per_court_hour: session.costPerCourtHour, notes: session.notes || null }; try { if (session.id) { await api(`sessions?id=eq.${session.id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(payload) }); setEditingSession(null); setMessage('Session updated.'); } else { await api('sessions', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ ...payload, creator_id: currentUser.id }) }); setShowCreateForm(false); setMessage('Session created.'); } await loadData(); } catch (error) { setMessage(error.message); } finally { setIsBusy(false); } }
   async function deleteSession(sessionId) { const session = sessions.find((item) => item.id === sessionId); if (!window.confirm(`Delete ${session?.title || 'this pickleball session'}? This cannot be undone.`)) return; setIsBusy(true); setMessage(''); try { await api(`sessions?id=eq.${sessionId}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }); setMessage('Session deleted.'); await loadData(); } catch (error) { setMessage(error.message); } finally { setIsBusy(false); } }
-  async function addAttendees(sessionId, attendeeIds) { setIsBusy(true); setMessage(''); try { const rows = attendeeIds.map((userId) => ({ session_id: sessionId, user_id: userId })); await api('session_attendees?on_conflict=session_id,user_id', { method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' }, body: JSON.stringify(rows) }); await loadData(); } catch (error) { setMessage(error.message); } finally { setIsBusy(false); } }
-  async function removeAttendee(sessionId, userId) { setIsBusy(true); setMessage(''); try { await api(`session_attendees?session_id=eq.${sessionId}&user_id=eq.${userId}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }); await loadData(); } catch (error) { setMessage(error.message); } finally { setIsBusy(false); } }
-
+  async function addAttendees(sessionId, attendeeIds) { setIsBusy(true); setMessage(''); try { const rows = attendeeIds.map((userId) => ({ session_id: sessionId, user_id: userId, added_by: currentUser.id })); await api('session_attendees?on_conflict=session_id,user_id', { method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' }, body: JSON.stringify(rows) }); await loadData(); } catch (error) { setMessage(error.message); } finally { setIsBusy(false); } }
+  async function removeAttendee(sessionId, userId) { setIsBusy(true); setMessage(''); try { const extraGuard = userId === currentUser.id ? '' : `&added_by=eq.${currentUser.id}`; await api(`session_attendees?session_id=eq.${sessionId}&user_id=eq.${userId}${extraGuard}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }); await loadData(); } catch (error) { setMessage(error.message); } finally { setIsBusy(false); } }
   if (!currentUser) return <LoginScreen onLogin={login} isBusy={isBusy} setupError={setupError} />;
   return <div className="app-shell"><header className="app-header"><div><p className="eyebrow">Private family planner</p><h1>Family Pickleball Planner</h1></div><div className="user-box"><span>Logged in as <strong>{currentUser.name}</strong></span><button className="secondary-button compact" type="button" onClick={logout}>Logout</button></div></header><main>{setupError ? <p className="setup-error">{setupError}</p> : null}{message ? <p className="status-message">{message}</p> : null}<section className="toolbar"><div><h2>Upcoming sessions</h2><p>{sessions.length ? `${sessions.length} session${sessions.length === 1 ? '' : 's'} ready to plan.` : 'No upcoming sessions yet.'}</p></div><button className="primary-button" type="button" onClick={() => setShowCreateForm((value) => !value)}>{showCreateForm ? 'Close' : 'Create Session'}</button></section>{showCreateForm ? <section className="form-panel" aria-label="Create session"><h2>Create Session</h2><SessionForm initialSession={blankSession} onSubmit={saveSession} onCancel={() => setShowCreateForm(false)} submitLabel="Create Session" isBusy={isBusy} /></section> : null}{editingSession ? <section className="form-panel" aria-label="Edit session"><h2>Edit Session</h2><SessionForm initialSession={editingSession} onSubmit={saveSession} onCancel={() => setEditingSession(null)} submitLabel="Save Changes" isBusy={isBusy} /></section> : null}<section className="session-list" aria-label="Session list">{sessions.length ? sessions.map((session) => <SessionCard key={session.id} session={session} users={users} currentUser={currentUser} onAddAttendees={addAttendees} onRemoveAttendee={removeAttendee} onEdit={(item) => { setShowCreateForm(false); setEditingSession(item); }} onDelete={deleteSession} isBusy={isBusy} />) : <div className="empty-state"><h3>No sessions planned</h3><p>Create the first pickleball session and the family can start RSVPing.</p></div>}</section></main></div>;
 }
