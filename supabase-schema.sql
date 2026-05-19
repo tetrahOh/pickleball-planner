@@ -15,11 +15,19 @@ create table if not exists sessions (
   start_time time not null,
   duration_hours numeric not null check (duration_hours > 0),
   location text not null,
+  session_address text,
   courts integer not null check (courts > 0),
+  court_numbers text,
   cost_per_court_hour numeric not null default 0 check (cost_per_court_hour >= 0),
   notes text,
   created_at timestamptz not null default now()
 );
+
+alter table sessions
+  add column if not exists session_address text;
+
+alter table sessions
+  add column if not exists court_numbers text;
 
 create table if not exists session_attendees (
   session_id uuid not null references sessions(id) on delete cascade,
