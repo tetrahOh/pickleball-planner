@@ -1,13 +1,13 @@
 # Family Pickleball Planner
 
-A lightweight React + Vite app for a private family group to organise pickleball sessions through a shared link. Users log in by name, create sessions, RSVP for themselves or multiple family members, and see simple cost estimates.
+A lightweight React + Vite app for a private family group to organise pickleball sessions through a shared link. Users log in by name, create sessions, RSVP for themselves or multiple family members, and see simple cost estimates. Data is shared across phones and computers with Supabase.
 
 ## Features
 
-- Name-only login with automatic local user creation
-- LocalStorage persistence for users, current login, sessions, and RSVPs
+- Name-only login with automatic shared user creation
+- Supabase persistence for users, sessions, and RSVPs
 - Create, edit, and delete sessions
-- Creator-only edit/delete controls
+- Creator-only edit/delete controls in the UI
 - RSVP for yourself or multiple family members
 - Duplicate attendee prevention
 - Upcoming session cards with attendee lists and cost calculations
@@ -21,6 +21,19 @@ npm run dev
 ```
 
 Open the local URL shown by Vite, usually `http://localhost:5173`.
+
+## Supabase Setup
+
+1. Open your Supabase project.
+2. Go to SQL Editor.
+3. Paste and run the contents of `supabase-schema.sql`.
+
+The app currently includes the supplied Supabase URL and public key in `src/App.jsx`. For hosted deployments, you can also set these environment variables:
+
+```bash
+VITE_SUPABASE_URL=https://uiopgjahnzzabsfdfcts.supabase.co
+VITE_SUPABASE_ANON_KEY=your-public-key
+```
 
 ## Build
 
@@ -51,4 +64,4 @@ Build with `npm run build` and publish the `dist` folder using your preferred Gi
 
 ## Data Notes
 
-Data is stored in the browser using localStorage. That keeps the app intentionally simple and easy to deploy, but each browser has its own data. The app is structured around simple user/session objects so it can later be upgraded to Supabase, Firebase, or another shared database.
+The app uses Supabase tables for shared family members, sessions, and attendee RSVPs. The current logged-in user is remembered in browser localStorage only so each device can stay logged in.
