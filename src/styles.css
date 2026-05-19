@@ -153,6 +153,26 @@ select[multiple] {
   margin-bottom: 0;
 }
 
+.setup-error,
+.status-message {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.setup-error {
+  background: #fff1f1;
+  color: var(--danger-dark);
+  border: 1px solid #f0c7c6;
+}
+
+.status-message {
+  background: var(--panel-soft);
+  color: var(--green-dark);
+  border: 1px solid #c9dbce;
+}
+
 .primary-button,
 .secondary-button,
 .danger-button {
