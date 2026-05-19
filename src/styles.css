@@ -74,13 +74,23 @@ select[multiple] { min-height: 120px; }
 .form-panel, .session-card, .empty-state { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
 .form-panel { padding: 22px; margin-bottom: 20px; }
 .session-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.field.full, .form-actions.full { grid-column: 1 / -1; }
+.field.full, .form-actions.full, .booking-check.full { grid-column: 1 / -1; }
 .form-actions { justify-content: flex-end; }
 .location-custom { margin-top: 10px; }
+.booking-check { display: flex; align-items: center; gap: 12px; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcf8; cursor: pointer; }
+.booking-check.checked { border-color: #b8d6bf; background: var(--panel-soft); }
+.booking-check input { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--green); }
+.booking-check-text { display: grid; gap: 3px; }
+.booking-check-text strong { color: var(--text); }
+.booking-check-text small { color: var(--muted); font-weight: 600; }
 .session-list { display: grid; gap: 18px; }
 .session-card { padding: 22px; }
 .date-line { margin-bottom: 6px; color: var(--green-dark); font-weight: 900; }
 .card-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.session-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.booking-status { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border-radius: 999px; font-size: 0.86rem; font-weight: 900; }
+.booking-status.booked { background: var(--panel-soft); color: var(--green-dark); border: 1px solid #b8d6bf; }
+.booking-status.pending { background: #fff9df; color: #745d12; border: 1px solid #ecd57a; }
 .session-details { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
 .session-details div { min-height: 76px; padding: 12px; background: #f8faf6; border: 1px solid var(--line); border-radius: 8px; }
 dt { margin-bottom: 6px; color: var(--muted); font-size: 0.82rem; font-weight: 800; }
