@@ -30,7 +30,7 @@ async function api(path, options = {}) {
   const data = text ? JSON.parse(text) : null;
   if (!response.ok) {
     const detail = data?.message || data?.hint || '';
-    if (detail.includes('schema cache') || detail.includes('family_members')) {
+    if (detail.includes('schema cache') || detail.includes('does not exist') || detail.includes('Could not find the table')) {
       throw new Error('Database tables are not set up yet. Run supabase-schema.sql in Supabase, then refresh.');
     }
     throw new Error(detail || 'Supabase request failed.');
@@ -38,8 +38,9 @@ async function api(path, options = {}) {
   return data;
 }
 
-function mapSession(row) {
-  const attendeeRows = row.session_attendees || [];
+function mapSession(row, members, attendeeRows) {
+  const creator = members.find((member) => member.id === row.creator_id);
+  const sessionAttendees = attendeeRows.filter((item) => item.session_id === row.id);
   return {
     id: row.id,
     title: row.title || '',
@@ -51,9 +52,9 @@ function mapSession(row) {
     costPerCourtHour: Number(row.cost_per_court_hour),
     notes: row.notes || '',
     creatorId: row.creator_id,
-    creatorName: row.creator?.name || 'Unknown',
-    attendeeIds: attendeeRows.map((item) => item.user_id),
-    attendees: attendeeRows.map((item) => item.family_members).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name)),
+    creatorName: creator?.name || 'Unknown',
+    attendeeIds: sessionAttendees.map((item) => item.user_id),
+    attendees: sessionAttendees.map((item) => members.find((member) => member.id === item.user_id)).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name)),
   };
 }
 
@@ -165,12 +166,13 @@ export default function App() {
   const [setupError, setSetupError] = useState('');
 
   async function loadData() {
-    const [members, sessionRows] = await Promise.all([
+    const [members, sessionRows, attendeeRows] = await Promise.all([
       api('family_members?select=id,name&order=name.asc'),
-      api(`sessions?select=id,title,session_date,start_time,duration_hours,location,courts,cost_per_court_hour,notes,creator_id,created_at,creator:family_members(id,name),session_attendees(user_id,family_members(id,name))&session_date=gte.${todayString()}&order=session_date.asc,start_time.asc`),
+      api(`sessions?select=id,title,session_date,start_time,duration_hours,location,courts,cost_per_court_hour,notes,creator_id,created_at&session_date=gte.${todayString()}&order=session_date.asc,start_time.asc`),
+      api('session_attendees?select=session_id,user_id'),
     ]);
     setUsers(members);
-    setSessions(sessionRows.map(mapSession));
+    setSessions(sessionRows.map((session) => mapSession(session, members, attendeeRows)));
     setSetupError('');
   }
 
