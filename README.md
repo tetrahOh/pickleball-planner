@@ -1,6 +1,6 @@
 # Family Pickleball Planner
 
-A lightweight React + Vite app for a private family group to organise pickleball sessions through a shared link. Users log in by name, create sessions, RSVP for themselves or multiple family members, and see simple cost estimates. Data is shared across phones and computers with Supabase.
+A lightweight React + Vite app for a private family group to organise pickleball sessions through a shared link. Users log in by name, create sessions, RSVP for themselves or multiple family members, and see simple session details. Data is shared across phones and computers with Supabase.
 
 ## Features
 
@@ -8,9 +8,12 @@ A lightweight React + Vite app for a private family group to organise pickleball
 - Supabase persistence for users, sessions, and RSVPs
 - Create, edit, and delete sessions
 - Creator-only edit/delete controls in the UI
+- Preset locations with saved addresses
+- Manual location and address entry for new places
+- Optional court number notes for booked courts
 - RSVP for yourself or multiple family members
 - Duplicate attendee prevention
-- Upcoming session cards with attendee lists and cost calculations
+- Upcoming session cards with attendee lists and map links
 - Mobile-friendly responsive layout
 
 ## Local Setup
