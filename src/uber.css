@@ -38,6 +38,26 @@ body {
   letter-spacing: -0.055em;
 }
 
+.app-title-button .eyebrow {
+  display: none;
+}
+
+.app-title-button h1,
+#login-title {
+  font-size: 0;
+  letter-spacing: 0;
+}
+
+.app-title-button h1::after,
+#login-title::after {
+  content: "Pickleball Planner";
+  display: block;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
 .eyebrow {
   color: #545454;
   letter-spacing: 0.08em;
@@ -289,8 +309,8 @@ body {
     padding: 16px;
   }
 
-  .app-title-button h1,
-  .app-header h1 {
+  .app-title-button h1::after,
+  #login-title::after {
     font-size: 2.4rem;
   }
 
