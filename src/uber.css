@@ -143,15 +143,20 @@ body {
 .calendar-booking {
   background: #000;
   color: #fff;
+  border: 2px solid transparent;
   border-radius: 14px;
 }
 
 .calendar-booking.rsvp-yes {
   background: #000;
+  border-color: #000;
+  color: #fff;
 }
 
 .calendar-booking.rsvp-no {
-  background: #6b6b6b;
+  background: #fff;
+  border-color: #7a7a7a;
+  color: #000;
 }
 
 .calendar-booking strong {
@@ -161,6 +166,11 @@ body {
 .calendar-booking span,
 .calendar-booking em {
   color: rgba(255,255,255,0.86);
+}
+
+.calendar-booking.rsvp-no span,
+.calendar-booking.rsvp-no em {
+  color: #3f3f3f;
 }
 
 .summary-row,
