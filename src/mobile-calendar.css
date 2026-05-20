@@ -50,13 +50,14 @@
   }
 
   .calendar-booking strong {
-    font-size: 0.56rem;
+    font-size: 0.62rem;
     line-height: 1.05;
   }
 
   .calendar-booking span {
-    font-size: 0.52rem;
+    font-size: 0.54rem;
     line-height: 1.05;
+    white-space: nowrap;
   }
 
   .calendar-booking em {
@@ -88,7 +89,7 @@
   }
 
   .calendar-booking strong {
-    font-size: 0.5rem;
+    font-size: 0.56rem;
   }
 
   .calendar-booking span {
