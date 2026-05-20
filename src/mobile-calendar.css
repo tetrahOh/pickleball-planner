@@ -1,0 +1,97 @@
+@media (max-width: 680px) {
+  .calendar-panel {
+    overflow-x: visible;
+  }
+
+  .calendar-month {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .calendar-months {
+    gap: 18px;
+  }
+
+  .calendar-month-title {
+    margin-bottom: 10px;
+    font-size: 1.05rem;
+  }
+
+  .calendar-weekdays {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 3px;
+    font-size: 0.58rem;
+  }
+
+  .calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  .calendar-day {
+    min-height: 52px;
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .calendar-day.has-booking {
+    border-width: 1px;
+  }
+
+  .calendar-day-number {
+    margin-bottom: 3px;
+    font-size: 0.68rem;
+  }
+
+  .calendar-booking {
+    gap: 1px;
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  .calendar-booking strong {
+    font-size: 0.56rem;
+    line-height: 1.05;
+  }
+
+  .calendar-booking span {
+    font-size: 0.52rem;
+    line-height: 1.05;
+  }
+
+  .calendar-booking em {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .overview-panel.calendar-panel {
+    padding: 14px 10px;
+  }
+
+  .calendar-weekdays {
+    font-size: 0.52rem;
+  }
+
+  .calendar-day {
+    min-height: 46px;
+    padding: 3px;
+    border-radius: 8px;
+  }
+
+  .calendar-day-number {
+    font-size: 0.62rem;
+  }
+
+  .calendar-booking {
+    padding: 3px;
+  }
+
+  .calendar-booking strong {
+    font-size: 0.5rem;
+  }
+
+  .calendar-booking span {
+    display: none;
+  }
+}
