@@ -10,12 +10,15 @@ const LOCATION_DETAILS = {
 };
 const LOCATION_OPTIONS = Object.keys(LOCATION_DETAILS);
 const blankSession = { title: '', date: '', startTime: '', durationHours: 1, location: '', address: '', courts: 1, courtNumbers: '', costPerCourtHour: 0, isBooked: false, notes: '' };
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 function cleanName(name) { const compact = name.replace(/\s+/g, ''); return compact ? compact.charAt(0).toUpperCase() + compact.slice(1) : ''; }
 function nameKey(name) { return cleanName(name).toLowerCase(); }
 function todayString() { return new Date().toISOString().slice(0, 10); }
 function formatDate(date) { return date ? new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${date}T00:00:00`)) : 'Date not set'; }
 function formatShortDate(date) { return date ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' }).format(new Date(`${date}T00:00:00`)) : 'Date not set'; }
+function formatMonth(date) { return new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(date); }
+function attendeeLabel(count) { return `${count} attending`; }
 function formatClock(totalMinutes) { const normalized = ((totalMinutes % 1440) + 1440) % 1440; const hours24 = Math.floor(normalized / 60); const minutes = normalized % 60; const period = hours24 >= 12 ? 'PM' : 'AM'; const hours12 = hours24 % 12 || 12; return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`; }
 function formatTimeRange(startTime, durationHours) { const [hours, minutes] = String(startTime || '').split(':').map(Number); if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return startTime || 'Time not set'; const startMinutes = hours * 60 + minutes; const endMinutes = startMinutes + Math.round(Number(durationHours || 0) * 60); return `${formatClock(startMinutes)} - ${formatClock(endMinutes)}`; }
 function formatMoney(value) { return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'AUD', maximumFractionDigits: value % 1 === 0 ? 0 : 2 }).format(Number.isFinite(value) ? value : 0); }
@@ -24,6 +27,8 @@ function mapsLink(address) { return `https://www.google.com/maps/search/?api=1&q
 function sessionPath(sessionId) { return `#/sessions/${sessionId}`; }
 function editPath(sessionId) { return `#/sessions/${sessionId}/edit`; }
 function goTo(hash) { window.location.hash = hash; }
+function dateKeyFromDate(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+function buildCalendarDays(monthDate) { const first = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1); const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate(); const mondayOffset = (first.getDay() + 6) % 7; return Array.from({ length: mondayOffset + daysInMonth }, (_, index) => index < mondayOffset ? null : new Date(monthDate.getFullYear(), monthDate.getMonth(), index - mondayOffset + 1)); }
 
 function parseRoute() {
   const parts = window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
@@ -90,12 +95,15 @@ function SessionForm({ initialSession, onSubmit, onCancel, submitLabel, isBusy }
 }
 
 function SummaryButton({ session, onOpen }) {
-  return <button className="summary-row" type="button" onClick={() => onOpen(session.id)}><span className="summary-date">{formatShortDate(session.date)}</span><span className="summary-main"><strong>{session.title || 'Pickleball Session'}</strong><small>{formatTimeRange(session.startTime, session.durationHours)} at {session.location}</small><small>Created by {session.creatorName}</small></span><span className={session.isBooked ? 'booking-status booked' : 'booking-status pending'}>{session.isBooked ? 'Booked' : 'Not booked'}</span></button>;
+  return <button className="summary-row" type="button" onClick={() => onOpen(session.id)}><span className="summary-date">{formatShortDate(session.date)}</span><span className="summary-main"><strong>{session.title || 'Pickleball Session'}</strong><small>{formatTimeRange(session.startTime, session.durationHours)} at {session.location}</small><small>{attendeeLabel(session.attendees.length)} · Created by {session.creatorName}</small></span><span className={session.isBooked ? 'booking-status booked' : 'booking-status pending'}>{session.isBooked ? 'Booked' : 'Not booked'}</span></button>;
 }
 
 function CalendarSection({ sessions, onOpen }) {
   const bookedSessions = sessions.filter((session) => session.isBooked);
-  return <section className="overview-panel"><div className="section-heading"><h2>Calendar</h2><p>Booked sessions</p></div>{bookedSessions.length ? <div className="calendar-list">{bookedSessions.map((session) => <button className="calendar-item" type="button" key={session.id} onClick={() => onOpen(session.id)}><span>{formatShortDate(session.date)}</span><strong>{formatTimeRange(session.startTime, session.durationHours)}</strong><small>{session.title || session.location}</small></button>)}</div> : <p className="empty-text">No booked sessions yet.</p>}</section>;
+  const monthDate = bookedSessions.length ? new Date(`${bookedSessions[0].date}T00:00:00`) : new Date();
+  const sessionsByDate = bookedSessions.reduce((grouped, session) => { grouped[session.date] = [...(grouped[session.date] || []), session]; return grouped; }, {});
+  const calendarDays = buildCalendarDays(monthDate);
+  return <section className="overview-panel calendar-panel"><div className="section-heading"><h2>Calendar</h2><p>{formatMonth(monthDate)}</p></div><div className="calendar-weekdays">{WEEKDAYS.map((day) => <span key={day}>{day}</span>)}</div><div className="calendar-grid">{calendarDays.map((day, index) => { const key = day ? dateKeyFromDate(day) : `blank-${index}`; const daySessions = day ? sessionsByDate[key] || [] : []; return <div className={daySessions.length ? 'calendar-day has-booking' : 'calendar-day'} key={key}>{day ? <span className="calendar-day-number">{day.getDate()}</span> : null}{daySessions.map((session) => <button className="calendar-booking" type="button" key={session.id} onClick={() => onOpen(session.id)}><strong>{formatTimeRange(session.startTime, session.durationHours)}</strong><span>{attendeeLabel(session.attendees.length)}</span></button>)}</div>; })}</div>{bookedSessions.length ? null : <p className="empty-text calendar-empty">No booked sessions yet.</p>}</section>;
 }
 
 function UpcomingSection({ sessions, onOpen }) {
