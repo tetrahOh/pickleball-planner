@@ -1,0 +1,298 @@
+:root {
+  --bg: #f6f6f6;
+  --panel: #ffffff;
+  --panel-soft: #f2f2f2;
+  --text: #000000;
+  --muted: #5f6368;
+  --line: #e8e8e8;
+  --line-strong: #d7d7d7;
+  --black: #000000;
+  --black-soft: #1f1f1f;
+  --green: #00875a;
+  --green-soft: #e9f7ef;
+  --danger: #b3261e;
+  --danger-soft: #fceeee;
+  --shadow: 0 16px 36px rgba(0,0,0,0.08);
+}
+
+body {
+  background: #f6f6f6;
+  color: #000;
+}
+
+.app-shell {
+  width: min(1240px, 100%);
+  padding-top: 24px;
+}
+
+.app-header {
+  align-items: flex-start;
+  padding-bottom: 22px;
+}
+
+.app-title-button h1,
+.app-header h1 {
+  max-width: 760px;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+}
+
+.eyebrow {
+  color: #545454;
+  letter-spacing: 0.08em;
+}
+
+.user-box {
+  padding-top: 22px;
+  color: #444;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button,
+.compact {
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.primary-button {
+  background: #000;
+  color: #fff;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #262626;
+}
+
+.secondary-button {
+  background: #eeeeee;
+  color: #000;
+}
+
+.danger-button {
+  background: #f7eeee;
+  color: #b3261e;
+}
+
+.toolbar,
+.overview-panel,
+.page-heading,
+.session-card,
+.form-panel,
+.empty-state {
+  border: 0;
+  border-radius: 28px;
+  box-shadow: 0 12px 34px rgba(0,0,0,0.07);
+}
+
+.toolbar {
+  min-height: 88px;
+  padding: 22px 24px;
+}
+
+.toolbar h2,
+.section-heading h2,
+.page-heading h2 {
+  font-weight: 900;
+  letter-spacing: -0.035em;
+}
+
+.planner-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(390px, 0.86fr);
+  gap: 18px;
+}
+
+.calendar-panel {
+  grid-column: 1 / -1;
+}
+
+.calendar-months {
+  gap: 26px;
+}
+
+.calendar-month-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+}
+
+.calendar-weekdays {
+  color: #777;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.calendar-day {
+  min-height: 124px;
+  border: 1px solid #ededed;
+  border-radius: 18px;
+  background: #fafafa;
+}
+
+.calendar-day.has-booking {
+  background: #fff;
+  border: 2px solid #000;
+}
+
+.calendar-day-number {
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.calendar-booking {
+  background: #000;
+  color: #fff;
+  border-radius: 14px;
+}
+
+.calendar-booking.rsvp-yes {
+  background: #000;
+}
+
+.calendar-booking.rsvp-no {
+  background: #6b6b6b;
+}
+
+.calendar-booking strong {
+  font-weight: 900;
+}
+
+.calendar-booking span,
+.calendar-booking em {
+  color: rgba(255,255,255,0.86);
+}
+
+.summary-row,
+.my-booking {
+  background: #f3f3f3;
+  border: 0;
+  border-radius: 22px;
+}
+
+.summary-row:hover,
+.my-booking:hover {
+  background: #ededed;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.summary-row.rsvp-yes,
+.summary-row.rsvp-no {
+  background: #f3f3f3;
+  border-color: transparent;
+}
+
+.summary-date {
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 18px;
+  color: #000;
+}
+
+.summary-main strong,
+.my-booking-main strong {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.summary-main small,
+.my-booking-main span,
+.section-heading p,
+.toolbar p {
+  color: #4e4e4e;
+}
+
+.summary-badges {
+  align-items: center;
+}
+
+.rsvp-status,
+.booking-status {
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.rsvp-status.going {
+  background: #000;
+  color: #fff;
+}
+
+.rsvp-status.not-going {
+  background: #e6e6e6;
+  color: #000;
+}
+
+.booking-status.booked {
+  background: #e9f7ef;
+  color: #007a52;
+}
+
+.booking-status.pending {
+  background: #eeeeee;
+  color: #333;
+}
+
+.session-details div,
+.rsvp-help,
+.family-rsvp,
+.session-notes {
+  background: #f5f5f5;
+  border-radius: 20px;
+}
+
+.attendee-pill {
+  background: #eeeeee;
+  color: #000;
+}
+
+.attendee-pill button {
+  background: #d8d8d8;
+  color: #000;
+}
+
+.login-shell {
+  background: #f6f6f6;
+}
+
+.login-panel {
+  border-radius: 30px;
+  box-shadow: 0 18px 48px rgba(0,0,0,0.1);
+}
+
+.login-art {
+  background: #000;
+}
+
+.brand-mark {
+  background: #fff;
+}
+
+@media (max-width: 980px) {
+  .planner-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .app-shell {
+    padding: 16px;
+  }
+
+  .app-title-button h1,
+  .app-header h1 {
+    font-size: 2.4rem;
+  }
+
+  .toolbar,
+  .overview-panel,
+  .page-heading,
+  .session-card,
+  .form-panel {
+    border-radius: 24px;
+  }
+
+  .calendar-month {
+    min-width: 760px;
+  }
+}
