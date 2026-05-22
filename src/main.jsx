@@ -6,5 +6,6 @@ import './rsvp-status.css';
 import './readability.css';
 import './uber.css';
 import './mobile-calendar.css';
+import './capacity.css';
 
 createRoot(document.getElementById('root')).render(<App />);
