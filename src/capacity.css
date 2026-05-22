@@ -1,0 +1,45 @@
+.interest-callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 20px;
+  background: #fff7d6;
+  border: 1px solid #f1df90;
+}
+
+.interest-callout p {
+  flex: 1 1 260px;
+  margin: 0;
+  color: #3f3f3f;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.waitlist {
+  padding-top: 2px;
+}
+
+.waitlist h4::after {
+  content: ' - not counted as confirmed players';
+  color: #6b6b6b;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.waitlist-pill {
+  background: #fff7d6;
+  color: #000;
+}
+
+@media (max-width: 560px) {
+  .interest-callout {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .interest-callout p {
+    flex-basis: auto;
+  }
+}
