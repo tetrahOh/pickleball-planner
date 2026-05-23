@@ -24,8 +24,8 @@ function capacityFor(session) { return Number(session.courts || 1) * Number(sess
 function spotsFilledLabel(session) { return `${session.attendees.length} / ${capacityFor(session)} spots filled`; }
 function isFull(session) { return session.attendees.length >= capacityFor(session); }
 function interestNames(session) { return session.interested.map((person) => person.name).join(', '); }
-function interestLine(session) { return session.interested.length ? `Interested: ${interestNames(session)}` : ''; }
-function calendarInterestLine(session) { if (!session.interested.length) return ''; const names = session.interested.slice(0, 2).map((person) => person.name).join(', '); const extra = session.interested.length > 2 ? ` +${session.interested.length - 2}` : ''; return `Wait: ${names}${extra}`; }
+function interestLine(session) { return session.interested.length ? `Waitlist: ${interestNames(session)}` : ''; }
+function calendarInterestLine(session) { return session.interested.length ? `Waitlist: ${session.interested.length}` : ''; }
 function rsvpStatus(session, currentUser) { const going = Boolean(currentUser && session.attendeeIds.includes(currentUser.id)); return { going, label: going ? 'You RSVPed' : "Not RSVP'd" }; }
 function formatClock(totalMinutes) { const normalized = ((totalMinutes % 1440) + 1440) % 1440; const hours24 = Math.floor(normalized / 60); const minutes = normalized % 60; const period = hours24 >= 12 ? 'PM' : 'AM'; const hours12 = hours24 % 12 || 12; return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`; }
 function formatStartTime(startTime) { const [hours, minutes] = String(startTime || '').split(':').map(Number); if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return startTime || 'Time'; const period = hours >= 12 ? 'PM' : 'AM'; const hours12 = hours % 12 || 12; return minutes === 0 ? `${hours12} ${period}` : `${hours12}:${String(minutes).padStart(2, '0')} ${period}`; }
