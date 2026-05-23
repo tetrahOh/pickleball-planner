@@ -17,6 +17,23 @@
   line-height: 1.45;
 }
 
+.summary-interest {
+  color: #8a5a00 !important;
+  font-weight: 900 !important;
+}
+
+.calendar-interest {
+  color: #ffd84d !important;
+  font-weight: 950 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-booking.rsvp-no .calendar-interest {
+  color: #8a5a00 !important;
+}
+
 .waitlist {
   padding-top: 2px;
 }
