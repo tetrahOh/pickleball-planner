@@ -29,7 +29,7 @@
   }
 
   .calendar-day {
-    min-height: 52px;
+    min-height: 56px;
     padding: 4px;
     border-radius: 10px;
   }
@@ -75,7 +75,7 @@
   }
 
   .calendar-day {
-    min-height: 46px;
+    min-height: 50px;
     padding: 3px;
     border-radius: 8px;
   }
@@ -94,5 +94,10 @@
 
   .calendar-booking span {
     display: none;
+  }
+
+  .calendar-booking .calendar-interest {
+    display: block;
+    font-size: 0.5rem;
   }
 }
